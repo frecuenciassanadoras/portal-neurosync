@@ -4,99 +4,311 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acceso Clínico - NeuroSync</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        :root { --bg-color: #f0f4f8; --card-bg: #ffffff; --text-main: #1e293b; --text-muted: #64748b; --clinical-blue: #0284c7; --clinical-blue-hover: #0369a1; --border-color: #e2e8f0; --input-bg: #f8fafc; }
+        :root {
+            --bg-color: #f0f4f8; 
+            --card-bg: #ffffff; 
+            --text-main: #1e293b; 
+            --text-muted: #64748b; 
+            --clinical-blue: #0284c7; 
+            --clinical-blue-hover: #0369a1;
+            --border-color: #e2e8f0;
+            --input-bg: #f8fafc;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; justify-content: center; align-items: center; position: relative; overflow: hidden; }
-        #neuro-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-        .login-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 40px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 40px rgba(15, 23, 42, 0.1); z-index: 10; }
-        .status-indicator { display: inline-flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 6px 12px; border-radius: 50px; font-size: 0.7rem; font-weight: 700; color: var(--text-muted); margin-bottom: 20px; text-transform: uppercase; }
-        .status-dot { width: 8px; height: 8px; background-color: #10b981; border-radius: 50%; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #neuro-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(15, 23, 42, 0.1);
+            z-index: 10;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f1f5f9;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+        
+        .status-dot {
+            width: 8px; height: 8px;
+            background-color: #10b981; 
+            border-radius: 50%;
+        }
+
         .logo-title { font-size: 1.8rem; margin-bottom: 5px; font-weight: 700; }
         .logo-title span { color: var(--clinical-blue); }
         .subtitle { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 25px; }
+
         .input-group { position: relative; margin-bottom: 15px; text-align: left; }
         .input-label { display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 5px; color: var(--text-muted); }
+        
         .input-group i { position: absolute; left: 15px; top: 38px; color: #94a3b8; }
-        .login-input { width: 100%; background: var(--input-bg); border: 1px solid var(--border-color); padding: 12px 15px 12px 40px; border-radius: 8px; outline: none; font-family: inherit; }
-        .btn-login { background: var(--clinical-blue); color: #fff; border: none; width: 100%; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+
+        .login-input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            padding: 12px 15px 12px 40px;
+            border-radius: 8px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .btn-login {
+            background: var(--clinical-blue);
+            color: #fff;
+            border: none;
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
         .btn-login:hover { background: var(--clinical-blue-hover); }
-        .message-box { margin-top: 15px; padding: 10px; border-radius: 6px; font-size: 0.8rem; display: none; }
+
+        .message-box {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            display: none;
+        }
+
         .msg-error { background: #fef2f2; border: 1px solid #fca5a5; color: #ef4444; }
         .msg-success { background: #f0fdf4; border: 1px solid #86efac; color: #16a34a; }
+
+        /* ESTILOS PARA BOTONES DE SOPORTE Y COMPRA */
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 25px 0 15px 0;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .divider span { padding: 0 10px; text-transform: uppercase; letter-spacing: 0.5px;}
+        
+        .btn-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-decoration: none;
+            margin-bottom: 10px;
+            transition: 0.3s;
+        }
+        .btn-hotmart {
+            background-color: #fff;
+            color: #e14b1d; 
+            border: 1px solid #e14b1d;
+        }
+        .btn-hotmart:hover {
+            background-color: #fff0eb;
+        }
+        .btn-whatsapp {
+            background-color: #25d366;
+            color: #fff;
+            border: 1px solid #25d366;
+        }
+        .btn-whatsapp:hover {
+            background-color: #1fad53;
+        }
     </style>
 </head>
 <body>
+
     <canvas id="neuro-canvas"></canvas>
+
     <div class="login-card">
-        <div class="status-indicator"><div class="status-dot"></div>Sistema NeuroSync Activo</div>
+        <div class="status-indicator">
+            <div class="status-dot"></div>
+            Sistema NeuroSync Activo
+        </div>
+
         <h1 class="logo-title">NEURO<span>SYNC</span></h1>
         <p class="subtitle">Autenticación de Protocolo</p>
+
         <form id="login-form">
             <div class="input-group">
                 <label class="input-label">Email de Usuario</label>
                 <i class="fas fa-envelope"></i>
                 <input type="email" id="email" class="login-input" placeholder="correo@ejemplo.com" required>
             </div>
+
             <div class="input-group">
                 <label class="input-label">Clave de Acceso</label>
                 <i class="fas fa-lock"></i>
                 <input type="password" id="password" class="login-input" placeholder="••••••••" required>
             </div>
+
             <button type="submit" class="btn-login" id="btn-submit">INGRESAR AL PANEL</button>
         </form>
+
         <div id="message-container" class="message-box"></div>
+
+        <div class="divider"><span>¿Aún no tienes acceso?</span></div>
+        
+        <a href="https://pay.hotmart.com/U104728533E" target="_blank" class="btn-action btn-hotmart">
+            <i class="fas fa-bolt"></i> Adquirir Frecuencias NeuroSync
+        </a>
+        
+        <a href="https://wa.link/yy4etp" target="_blank" class="btn-action btn-whatsapp">
+            <i class="fab fa-whatsapp" style="font-size: 1.1rem;"></i> Soporte por WhatsApp
+        </a>
     </div>
 
     <script>
-        document.getElementById('login-form').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const msgBox = document.getElementById('message-container');
-            const btnSubmit = document.getElementById('btn-submit');
+        // LÓGICA DE ACCESO (Vía Netlify Functions)
+        const loginForm = document.getElementById('login-form');
+        const msgBox = document.getElementById('message-container');
+        const btnSubmit = document.getElementById('btn-submit');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
             
+            const emailValue = document.getElementById('email').value.trim();
+            const passValue = document.getElementById('password').value.trim();
+
             btnSubmit.disabled = true;
-            msgBox.textContent = 'Autenticando...';
-            msgBox.className = 'message-box msg-success';
-            msgBox.style.display = 'block';
+            msgBox.style.display = 'none';
 
             try {
                 // LLAMAMOS AL TÚNEL DE NETLIFY
                 const response = await fetch('/.netlify/functions/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({ email: emailValue, password: passValue })
                 });
 
                 const result = await response.json();
 
                 if (response.ok) {
                     msgBox.textContent = 'Acceso concedido. Sincronizando...';
+                    msgBox.className = 'message-box msg-success';
+                    msgBox.style.display = 'block';
+                    
                     setTimeout(() => { 
-                        window.location.href = "sincronizador.html"; // Redirige a tu reproductor
+                        window.location.href = "sincronizador.html"; 
                     }, 1200);
                 } else {
                     msgBox.textContent = result.message || 'Credenciales inválidas.';
                     msgBox.className = 'message-box msg-error';
+                    msgBox.style.display = 'block';
                 }
-            } catch (error) {
-                msgBox.textContent = 'Error de conexión. Intente de nuevo.';
+            } catch (err) {
+                console.error("Error:", err);
+                msgBox.textContent = 'Error de red. Intente de nuevo.';
                 msgBox.className = 'message-box msg-error';
+                msgBox.style.display = 'block';
             } finally {
                 btnSubmit.disabled = false;
             }
         });
 
-        // ANIMACIÓN DE NEURONAS
+        // ANIMACIÓN DE NEURONAS (Fondo)
         const canvas = document.getElementById('neuro-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
-        function init() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; particles = []; for (let i = 0; i < 75; i++) { particles.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4, r: 2 }); } }
-        function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; if(p.x < 0 || p.x > canvas.width) p.vx *= -1; if(p.y < 0 || p.y > canvas.height) p.vy *= -1; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fillStyle = 'rgba(2, 132, 199, 0.4)'; ctx.fill(); for(let j = i+1; j < particles.length; j++) { const p2 = particles[j]; const dist = Math.hypot(p.x - p2.x, p.y - p2.y); if(dist < 110) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.strokeStyle = `rgba(2, 132, 199, ${0.2 - dist/550})`; ctx.stroke(); } } }); requestAnimationFrame(animate); }
-        window.addEventListener('resize', init); init(); animate();
+
+        function init() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = [];
+            for (let i = 0; i < 75; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: (Math.random() - 0.5) * 0.4,
+                    r: 2
+                });
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy;
+                if(p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if(p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                ctx.fillStyle = 'rgba(2, 132, 199, 0.4)';
+                ctx.fill();
+
+                for(let j = i+1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if(dist < 110) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = `rgba(2, 132, 199, ${0.2 - dist/550})`;
+                        ctx.stroke();
+                    }
+                }
+            });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', init);
+        init();
+        animate();
     </script>
 </body>
 </html>
