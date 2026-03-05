@@ -67,6 +67,42 @@
         
         .theme-btn:hover, .menu-icon:hover { color: var(--text-main); }
 
+        /* --- MENÚ LATERAL (SIDEBAR) --- */
+        .sidebar-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 99; backdrop-filter: blur(3px);
+            opacity: 0; visibility: hidden; transition: 0.3s;
+        }
+        .sidebar-overlay.active { opacity: 1; visibility: visible; }
+
+        .sidebar {
+            position: fixed; top: 0; left: -280px; width: 260px; height: 100%;
+            background: var(--card-bg); z-index: 100;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+            transition: 0.3s ease-in-out;
+            padding: 30px 20px; display: flex; flex-direction: column;
+        }
+        .sidebar.active { left: 0; }
+        
+        .sidebar-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;
+        }
+        .sidebar-header h2 { font-size: 1.2rem; color: var(--text-main); margin: 0; font-weight: 800; letter-spacing: 1px;}
+        .sidebar-header h2 span { color: var(--color-left); }
+        .close-menu { color: var(--text-muted); font-size: 1.5rem; cursor: pointer; transition: 0.3s;}
+        .close-menu:hover { color: #ef4444; }
+
+        /* Botón de Cerrar Sesión */
+        .logout-btn {
+            display: flex; align-items: center; justify-content: center; gap: 10px; 
+            padding: 14px; color: #ef4444; font-weight: 600; text-decoration: none;
+            border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px;
+            margin-top: auto; transition: 0.3s; background: rgba(239, 68, 68, 0.05);
+            font-size: 0.95rem;
+        }
+        .logout-btn:hover { background: #ef4444; color: #fff; box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3); }
+
         /* --- APP CONTAINER --- */
         .app-container {
             width: 100%;
@@ -76,7 +112,7 @@
             align-items: center;
         }
 
-        /* --- ORÁCULO (Texto Superior) --- */
+        /* --- ORÁCULO --- */
         .oracle-section {
             text-align: center;
             margin-bottom: 40px;
@@ -85,7 +121,7 @@
 
         .oracle-input {
             width: 100%;
-            background: var(--card-bg);
+            background: var(--bg-color);
             border: 1px solid var(--border-color);
             color: var(--text-main);
             padding: 15px 20px;
@@ -94,7 +130,7 @@
             font-size: 0.95rem;
             margin-bottom: 15px;
             outline: none;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
         }
 
         .oracle-input::placeholder { color: var(--text-muted); }
@@ -161,9 +197,8 @@
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            /* El borde toma el gradiente de ambas frecuencias */
             background: linear-gradient(to right, var(--color-left), var(--color-right));
-            padding: 3px; /* Grosor del borde */
+            padding: 3px; 
             display: flex;
             justify-content: center;
             align-items: center;
@@ -178,7 +213,7 @@
         .play-btn-inner {
             width: 100%;
             height: 100%;
-            background-color: var(--bg-color);
+            background-color: var(--card-bg);
             border-radius: 50%;
             display: flex;
             justify-content: center;
@@ -188,12 +223,16 @@
             transition: background-color 0.4s ease;
         }
 
-        /* --- SELECTORES INFERIORES (Estilo App) --- */
+        /* --- SELECTORES INFERIORES --- */
         .selectors-container {
             display: flex;
             justify-content: space-between;
             width: 100%;
             gap: 20px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         }
 
         .selector-box {
@@ -222,7 +261,7 @@
             text-align-last: center;
             outline: none;
             cursor: pointer;
-            appearance: none; /* Oculta la flecha por defecto */
+            appearance: none; 
         }
         
         .freq-select option {
@@ -234,7 +273,7 @@
         .selector-box.left .freq-select { color: var(--color-left); }
         .selector-box.right .freq-select { color: var(--color-right); }
 
-        /* Controles de Volumen (Ocultos pero funcionales) */
+        /* Controles de Volumen */
         .volume-control {
             margin-top: 40px;
             display: flex;
@@ -257,8 +296,23 @@
 </head>
 <body>
 
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>NEURO<span>SYNC</span></h2>
+            <i class="fas fa-times close-menu" onclick="toggleMenu()"></i>
+        </div>
+        
+        <div style="flex-grow: 1;"></div>
+        
+        <a href="https://reproductor-frecuencias.netlify.app/" onclick="sessionStorage.clear();" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+        </a>
+    </div>
+
     <div class="top-nav">
-        <i class="fas fa-bars menu-icon"></i>
+        <i class="fas fa-bars menu-icon" onclick="toggleMenu()"></i>
+        
         <button class="theme-btn" onclick="toggleTheme()" id="theme-icon">
             <i class="fas fa-sun"></i>
         </button>
@@ -275,7 +329,7 @@
         </div>
 
         <div class="visualizer" id="visualizer">
-            </div>
+        </div>
 
         <div class="play-ring" onclick="toggleMasterPlay()">
             <div class="play-btn-inner" id="play-btn">
@@ -307,7 +361,7 @@
     <audio id="audio-right" loop crossorigin="anonymous"></audio>
 
     <script>
-        // --- BASE DE DATOS (CON COLORES DINÁMICOS) ---
+        // --- BASE DE DATOS ---
         const frequencies = [
             { id: "111", hz: "111 Hz", desc: "Paz", color: "#f5f6fa", url: "https://f005.backblazeb2.com/file/mis-frecuencias-musicales/111+Hz.mp3?v=1" },
             { id: "174", hz: "174 Hz", desc: "Alivio", color: "#d4af37", url: "https://f005.backblazeb2.com/file/mis-frecuencias-musicales/174+Hz.mp3?v=1" },
@@ -346,10 +400,8 @@
             for(let i = 0; i < 30; i++) {
                 let bar = document.createElement('div');
                 bar.classList.add('bar');
-                // Alturas base aleatorias
                 let baseHeight = Math.floor(Math.random() * 20) + 10;
                 bar.style.height = baseHeight + 'px';
-                // Delay aleatorio para efecto de onda real
                 bar.style.animationDelay = (Math.random() * 1.5) + 's';
                 visualizer.appendChild(bar);
             }
@@ -373,7 +425,6 @@
             const fL = getFreqById(selectLeft.value);
             const fR = getFreqById(selectRight.value);
             
-            // Actualizar Variables CSS (Colores)
             rootVars.setProperty('--color-left', fL.color);
             rootVars.setProperty('--color-right', fR.color);
             
@@ -495,11 +546,18 @@
 
             resultText.innerHTML = msg;
             
-            // Aplicar automáticamente
             selectLeft.value = recLeft;
             selectRight.value = recRight;
             updateUI();
             if(!isPlaying) toggleMasterPlay();
+        }
+
+        // 9. FUNCIÓN DEL MENÚ LATERAL (NUEVA)
+        function toggleMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
         }
 
         // ARRANQUE
