@@ -1,38 +1,26 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <script>
-        // Si el usuario no tiene una sesión activa, lo redirige al login (index.html)
-        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
-            window.location.href = 'index.html';
-        }
-    </script>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sincronizador Binaural App</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <title>Acceso Clínico - NeuroSync</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* --- VARIABLES DE TEMA --- */
-        :root {
-            --bg-color: #16162a;
-            --card-bg: #22223b;
-            --text-main: #ffffff;
-            --text-muted: #8b8ea5;
-            --border-color: rgba(255, 255, 255, 0.1);
-            
-            /* Colores Dinámicos (Se actualizan por JS) */
-            --color-left: #00d4ff;
-            --color-right: #a64bf4;
-        }
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-        [data-theme="light"] {
-            --bg-color: #f4f5f9;
-            --card-bg: #ffffff;
-            --text-main: #1a1a2e;
-            --text-muted: #666666;
-            --border-color: rgba(0, 0, 0, 0.1);
+    <style>
+        :root {
+            --bg-color: #f0f4f8; 
+            --card-bg: #ffffff; 
+            --text-main: #1e293b; 
+            --text-muted: #64748b; 
+            --clinical-blue: #0284c7; 
+            --clinical-blue-hover: #0369a1;
+            --border-color: #e2e8f0;
+            --input-bg: #f8fafc;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -40,651 +28,233 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.4s ease, color 0.4s ease;
-            overflow-x: hidden;
-            padding: 20px;
-        }
-
-        /* --- HEADER --- */
-        .top-nav {
-            width: 100%;
-            max-width: 500px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .menu-icon, .theme-btn {
-            font-size: 1.5rem;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: color 0.3s;
-            background: none;
-            border: none;
-        }
-        
-        .theme-btn:hover, .menu-icon:hover { color: var(--text-main); }
-
-        /* --- MENÚ LATERAL (SIDEBAR) --- */
-        .sidebar-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 99; backdrop-filter: blur(3px);
-            opacity: 0; visibility: hidden; transition: 0.3s;
-        }
-        .sidebar-overlay.active { opacity: 1; visibility: visible; }
-
-        .sidebar {
-            position: fixed; top: 0; left: -280px; width: 260px; height: 100%;
-            background: var(--card-bg); z-index: 100;
-            box-shadow: 5px 0 15px rgba(0,0,0,0.3);
-            transition: 0.3s ease-in-out;
-            padding: 30px 20px; display: flex; flex-direction: column;
-        }
-        .sidebar.active { left: 0; }
-        
-        .sidebar-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;
-        }
-        .sidebar-header h2 { font-size: 1.2rem; color: var(--text-main); margin: 0; font-weight: 800; letter-spacing: 1px;}
-        .sidebar-header h2 span { color: var(--color-left); }
-        .close-menu { color: var(--text-muted); font-size: 1.5rem; cursor: pointer; transition: 0.3s;}
-        .close-menu:hover { color: #ef4444; }
-
-        .logout-btn {
-            display: flex; align-items: center; justify-content: center; gap: 10px; 
-            padding: 14px; color: #ef4444; font-weight: 600; text-decoration: none;
-            border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px;
-            margin-top: auto; transition: 0.3s; background: rgba(239, 68, 68, 0.05);
-            font-size: 0.95rem;
-        }
-        .logout-btn:hover { background: #ef4444; color: #fff; box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3); }
-
-        /* --- APP CONTAINER --- */
-        .app-container {
-            width: 100%;
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* --- ORÁCULO --- */
-        .oracle-section {
-            text-align: center;
-            margin-bottom: 20px;
-            width: 100%;
-        }
-
-        .oracle-input {
-            width: 100%;
-            background: var(--bg-color);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 15px 20px;
-            border-radius: 15px;
-            font-family: 'Poppins', sans-serif;
-            font-size: 0.95rem;
-            margin-bottom: 15px;
-            outline: none;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .oracle-input::placeholder { color: var(--text-muted); }
-
-        .btn-oracle {
-            background: transparent;
-            color: var(--text-muted);
-            border: 1px solid var(--border-color);
-            padding: 8px 20px;
-            border-radius: 50px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .btn-oracle:hover { border-color: var(--text-main); color: var(--text-main); }
-
-        .oracle-result {
-            font-size: 1.1rem;
-            font-weight: 600;
-            line-height: 1.4;
-            margin-top: 20px;
-            color: var(--text-main);
-            min-height: 30px;
-        }
-
-        /* --- VISUALIZADOR DE ONDAS --- */
-        .visualizer {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            height: 100px;
-            margin-bottom: 40px;
-            width: 100%;
-        }
-
-        .bar {
-            width: 6px;
-            border-radius: 50px;
-            background: var(--text-muted);
-            transition: height 0.2s ease, background-color 0.5s ease, box-shadow 0.5s ease;
-        }
-
-        .bar:nth-child(-n+15) { background-color: var(--color-left); }
-        .bar:nth-child(n+16) { background-color: var(--color-right); }
-
-        .visualizer.playing .bar {
-            animation: soundWave 1.2s infinite ease-in-out alternate;
-        }
-        .visualizer.playing .bar:nth-child(-n+15) { box-shadow: 0 0 10px var(--color-left); }
-        .visualizer.playing .bar:nth-child(n+16) { box-shadow: 0 0 10px var(--color-right); }
-
-        @keyframes soundWave { 0% { height: 10px; } 100% { height: 100px; } }
-
-        /* --- BOTÓN PLAY --- */
-        .play-ring {
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            background: linear-gradient(to bottom right, var(--color-left), var(--color-right));
-            padding: 3px; 
-            display: flex;
             justify-content: center;
             align-items: center;
-            margin-bottom: 40px;
-            cursor: pointer;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-            transition: transform 0.3s;
+            position: relative;
+            overflow: hidden;
         }
 
-        .play-ring:active { transform: scale(0.95); }
-
-        .play-btn-inner {
-            width: 100%;
-            height: 100%;
-            background-color: var(--bg-color); /* Centro oscuro como en la imagen */
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 2rem;
-            color: var(--text-main);
+        #neuro-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            pointer-events: none;
         }
 
-        /* --- CONTROLES DE TIEMPO Y PROGRESO --- */
-        .progress-wrapper {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 25px;
-        }
-        
-        .time-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        #time-current, #time-total {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        .timer-select {
-            background: var(--bg-color);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            font-family: 'Poppins', sans-serif;
-            font-size: 0.75rem;
-            padding: 4px 10px;
-            border-radius: 5px;
-            outline: none;
-            cursor: pointer;
-        }
-
-        .progress-bar {
-            width: 100%;
-            -webkit-appearance: none;
-            appearance: none;
-            height: 5px;
-            background: var(--border-color);
-            border-radius: 5px;
-            outline: none;
-            cursor: pointer;
-        }
-
-        .progress-bar::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: var(--text-main);
-            cursor: pointer;
-            box-shadow: 0 0 5px rgba(255,255,255,0.5);
-        }
-
-        /* --- SELECTORES INFERIORES --- */
-        .selectors-container {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            gap: 20px;
+        .login-card {
             background: var(--card-bg);
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-
-        .selector-box {
-            flex: 1;
-            text-align: center;
-        }
-
-        .selector-label {
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-            display: block;
-        }
-
-        .freq-select {
-            width: 100%;
-            background: transparent;
-            border: none;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 800;
-            font-size: 1.1rem;
-            text-align: center;
-            text-align-last: center;
-            outline: none;
-            cursor: pointer;
-            appearance: none; 
-        }
-        
-        .freq-select option {
-            background: var(--bg-color);
-            color: var(--text-main);
-            font-weight: normal;
-        }
-
-        .selector-box.left .freq-select { color: var(--color-left); }
-        .selector-box.right .freq-select { color: var(--color-right); }
-
-        /* --- ORÁCULO DE SIGNIFICADO DE SINERGIA --- */
-        .synergy-meaning-box {
-            width: 100%;
-            background: transparent;
-            border: 1px dashed var(--border-color);
-            padding: 15px 20px;
+            border: 1px solid var(--border-color);
             border-radius: 12px;
+            padding: 40px;
+            width: 90%;
+            max-width: 400px;
             text-align: center;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            line-height: 1.5;
+            box-shadow: 0 10px 40px rgba(15, 23, 42, 0.1);
+            z-index: 10;
         }
 
-        .synergy-meaning-box strong {
-            color: var(--text-main);
-        }
-
-        /* Controles de Volumen */
-        .volume-control {
-            margin-top: 30px;
-            display: flex;
+        .status-indicator {
+            display: inline-flex;
             align-items: center;
-            gap: 15px;
+            gap: 8px;
+            background: #f1f5f9;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 700;
             color: var(--text-muted);
-            width: 100%;
-            max-width: 300px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
         }
         
-        .vol-slider {
-            flex: 1;
-            accent-color: var(--text-muted);
-            height: 4px;
-            background: var(--border-color);
-            border-radius: 5px;
-            outline: none;
-            -webkit-appearance: auto;
+        .status-dot {
+            width: 8px; height: 8px;
+            background-color: #10b981; 
+            border-radius: 50%;
         }
+
+        .logo-title { font-size: 1.8rem; margin-bottom: 5px; font-weight: 700; }
+        .logo-title span { color: var(--clinical-blue); }
+        .subtitle { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 25px; }
+
+        .input-group { position: relative; margin-bottom: 15px; text-align: left; }
+        .input-label { display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 5px; color: var(--text-muted); }
+        
+        .input-group i { position: absolute; left: 15px; top: 38px; color: #94a3b8; }
+
+        .login-input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            padding: 12px 15px 12px 40px;
+            border-radius: 8px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .btn-login {
+            background: var(--clinical-blue);
+            color: #fff;
+            border: none;
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        .btn-login:hover { background: var(--clinical-blue-hover); }
+
+        .message-box {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            display: none;
+        }
+
+        .msg-error { background: #fef2f2; border: 1px solid #fca5a5; color: #ef4444; }
+        .msg-success { background: #f0fdf4; border: 1px solid #86efac; color: #16a34a; }
     </style>
 </head>
 <body>
 
-    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleMenu()"></div>
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h2>NEURO<span>SYNC</span></h2>
-            <i class="fas fa-times close-menu" onclick="toggleMenu()"></i>
+    <canvas id="neuro-canvas"></canvas>
+
+    <div class="login-card">
+        <div class="status-indicator">
+            <div class="status-dot"></div>
+            Sistema NeuroSync Activo
         </div>
-        
-        <div style="flex-grow: 1;"></div>
-        
-        <a href="https://reproductor-frecuencias.netlify.app/" onclick="sessionStorage.clear();" class="logout-btn">
-            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-        </a>
+
+        <h1 class="logo-title">NEURO<span>SYNC</span></h1>
+        <p class="subtitle">Autenticación de Protocolo</p>
+
+        <form id="login-form">
+            <div class="input-group">
+                <label class="input-label">Email de Usuario</label>
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="email" class="login-input" placeholder="correo@ejemplo.com" required>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Clave de Acceso</label>
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" class="login-input" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn-login" id="btn-submit">INGRESAR AL PANEL</button>
+        </form>
+
+        <div id="message-container" class="message-box"></div>
     </div>
-
-    <div class="top-nav">
-        <i class="fas fa-bars menu-icon" onclick="toggleMenu()"></i>
-        <button class="theme-btn" onclick="toggleTheme()" id="theme-icon">
-            <i class="fas fa-cog"></i>
-        </button>
-    </div>
-
-    <div class="app-container">
-        
-        <div class="oracle-section">
-            <input type="text" id="oracle-input" class="oracle-input" placeholder="Ej: Siento estrés, deudas o ansiedad...">
-            <button class="btn-oracle" onclick="analyzeEnergy()">Generar Sinergia</button>
-            <div id="oracle-result" class="oracle-result">
-                Ajusta las frecuencias a tu medida.
-            </div>
-        </div>
-
-        <div class="visualizer" id="visualizer">
-        </div>
-
-        <div class="play-ring" onclick="toggleMasterPlay()">
-            <div class="play-btn-inner" id="play-btn">
-                <i class="fas fa-play" style="margin-left: 5px;"></i>
-            </div>
-        </div>
-
-        <div class="progress-wrapper">
-            <div class="time-row">
-                <span id="time-current">00:00</span>
-                <select id="time-select" class="timer-select" onchange="handleTimerChange()">
-                    <option value="bucle">Bucle ∞</option>
-                    <option value="900">15 min</option>
-                    <option value="1800">30 min</option>
-                    <option value="3600">60 min</option>
-                </select>
-                <span id="time-total">00:00</span>
-            </div>
-            <input type="range" id="progress-bar" class="progress-bar" value="0" min="0" max="100" step="0.1">
-        </div>
-
-        <div class="selectors-container">
-            <div class="selector-box left">
-                <span class="selector-label">Oído Izquierdo</span>
-                <select id="select-left" class="freq-select" onchange="updateUI()"></select>
-            </div>
-            
-            <div class="selector-box right">
-                <span class="selector-label">Oído Derecho</span>
-                <select id="select-right" class="freq-select" onchange="updateUI()"></select>
-            </div>
-        </div>
-
-        <div class="synergy-meaning-box" id="synergy-meaning">
-            Selecciona tus frecuencias para analizar la sinergia.
-        </div>
-
-        <div class="volume-control">
-            <i class="fas fa-volume-down"></i>
-            <input type="range" id="vol-slider" class="vol-slider" min="0" max="1" step="0.05" value="0.8" onchange="changeVolume()">
-            <i class="fas fa-volume-up"></i>
-        </div>
-
-    </div>
-
-    <audio id="audio-left" loop crossorigin="anonymous"></audio>
-    <audio id="audio-right" loop crossorigin="anonymous"></audio>
 
     <script>
-        // --- BASE DE DATOS ---
-        const frequencies = [
-            { id: "111", hz: "111 Hz", desc: "Paz", color: "#f5f6fa", url: "https://f005.backblazeb2.com/file/mis-frecuencias-musicales/111+Hz.mp3?v=1" },
-            { id: "174", hz: "174 Hz", desc: "Alivio", color: "#d4af37", url: "https://f005.backblazeb2.com/file/mis-frecuencias-musicales/174+Hz.mp3?v=1" },
-            { id: "285", hz: "285 Hz", desc: "Aura", color: "#ff4757", url: "https://f005.backblazeb2.com/file/mis-frecuencias-musicales/285+Hz.mp3?v=1" },
-            { id: "396", hz: "396 Hz", desc: "Valor", color: "#ff6b81", url: "https://f005.backblazeb2.com/file/mis-frecuencias-musicales/396+Hz.mp3?v=1" },
-            { id: "417", hz: "417 Hz", desc: "Cambio", color: "#ffa502", url: "https://f005.backblazeb2.com/file/mis-frecuencias-musicales/417+Hz.mp3?v=1" },
-            { id: "432", hz: "432 Hz", desc: "Armonía", color: "#00d4ff", url: "https://f005.backblazeb2.com/file/mis-frecuencias-musicales/432+Hz.mp3?v=1" },
-            { id: "528", hz: "528 Hz", desc: "Amor", color: "#2ed573", url: "https://f005.backblazeb2.com/file/mis-frecuencias-musicales/528+Hz.mp3?v=1" },
-            { id: "639", hz: "639 Hz", desc: "Unión", color: "#ff7f50", url: "https://f005.backblazeb2.com/file/mis-frecuencias-musicales/639+Hz.mp3?v=1" },
-            { id: "741", hz: "741 Hz", desc: "Intuición", color: "#7bed9f", url: "https://f005.backblazeb2.com/file/mis-frecuencias-musicales/741+Hz.mp3?v=1" },
-            { id: "852", hz: "852 Hz", desc: "Visión", color: "#3742fa", url: "https://f005.backblazeb2.com/file/mis-frecuencias-musicales/852+Hz.mp3?v=1" },
-            { id: "888", hz: "888 Hz", desc: "Riqueza", color: "#f1c40f", url: "https://f005.backblazeb2.com/file/mis-frecuencias-musicales/888+Hz.mp3?v=1" },
-            { id: "963", hz: "963 Hz", desc: "Divino", color: "#9c88ff", url: "https://f005.backblazeb2.com/file/mis-frecuencias-musicales/963+Hz.mp3?v=1" },
-            { id: "999", hz: "999 Hz", desc: "Cierre", color: "#eccc68", url: "https://f005.backblazeb2.com/file/mis-frecuencias-musicales/999+Hz.mp3?v=1" }
-        ];
-
-        // REFERENCIAS
-        const selectLeft = document.getElementById('select-left');
-        const selectRight = document.getElementById('select-right');
-        const audioL = document.getElementById('audio-left');
-        const audioR = document.getElementById('audio-right');
-        const playBtn = document.getElementById('play-btn');
-        const volSlider = document.getElementById('vol-slider');
-        const visualizer = document.getElementById('visualizer');
-        const rootVars = document.documentElement.style;
+        // 1. CONFIGURACIÓN SUPABASE (Tus llaves oficiales)
+        const SUPABASE_URL = 'https://dothtuwrslpezhaxkjmw.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvdGh0dXdyc3BsZXpoYXhram13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzIzMjEsImV4cCI6MjA3MTI0ODMyMX0.B13yokCG9VQ49kjZ5pHeBdqBtW7i2CP8yg2l2Ekhqnc';
         
-        const progressBar = document.getElementById('progress-bar');
-        const timeCurrent = document.getElementById('time-current');
-        const timeTotal = document.getElementById('time-total');
-        const timeSelect = document.getElementById('time-select');
-        const synergyMeaning = document.getElementById('synergy-meaning');
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let isPlaying = false;
-        let currentL_ID = null;
-        let currentR_ID = null;
-        
-        let audioCtx, pannerL, pannerR;
-        let isAudioApiInitialized = false;
-        let endTime = 0;
+        // 2. LÓGICA DE ACCESO REFORZADA
+        const loginForm = document.getElementById('login-form');
+        const msgBox = document.getElementById('message-container');
 
-        function createVisualizer() {
-            for(let i = 0; i < 30; i++) {
-                let bar = document.createElement('div');
-                bar.classList.add('bar');
-                let baseHeight = Math.floor(Math.random() * 20) + 10;
-                bar.style.height = baseHeight + 'px';
-                bar.style.animationDelay = (Math.random() * 1.5) + 's';
-                visualizer.appendChild(bar);
-            }
-        }
-
-        function initSelectors() {
-            frequencies.forEach(f => {
-                selectLeft.add(new Option(`${f.hz} - ${f.desc}`, f.id));
-                selectRight.add(new Option(`${f.hz} - ${f.desc}`, f.id));
-            });
-            selectLeft.value = "432";
-            selectRight.value = "888";
-            updateUI();
-        }
-
-        function getFreqById(id) { return frequencies.find(f => f.id === id); }
-
-        function updateSynergyMeaning(fL, fR) {
-            if(fL.id === fR.id) {
-                synergyMeaning.innerHTML = `Sintonización Pura: Estás potenciando la energía de <strong>${fL.desc}</strong> en ambos hemisferios. Ideal para meditación profunda.`;
-            } else {
-                synergyMeaning.innerHTML = `Sinergia Activa: Instalando <strong>${fL.desc}</strong> en tu plano subconsciente (Izquierdo), para proyectar y manifestar <strong>${fR.desc}</strong> en tu realidad consciente (Derecho).`;
-            }
-        }
-
-        function updateUI() {
-            const fL = getFreqById(selectLeft.value);
-            const fR = getFreqById(selectRight.value);
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            rootVars.setProperty('--color-left', fL.color);
-            rootVars.setProperty('--color-right', fR.color);
-            
-            updateSynergyMeaning(fL, fR);
-            
-            let trackChanged = false;
-            if (currentL_ID !== fL.id) { audioL.src = fL.url; audioL.load(); currentL_ID = fL.id; trackChanged = true; }
-            if (currentR_ID !== fR.id) { audioR.src = fR.url; audioR.load(); currentR_ID = fR.id; trackChanged = true; }
+            // Limpiamos espacios accidentales
+            const emailValue = document.getElementById('email').value.trim();
+            const passValue = document.getElementById('password').value.trim();
 
-            if(isPlaying && trackChanged) {
-                audioL.play(); audioR.play();
-                setupMediaSession(fL, fR);
+            msgBox.style.display = 'none';
+
+            try {
+                // Consulta a la tabla usuarios_neurosync
+                const { data, error } = await _supabase
+                    .from('usuarios_neurosync')
+                    .select('*')
+                    .eq('email', emailValue)
+                    .eq('password', passValue);
+
+                if (error || !data || data.length === 0) {
+                    msgBox.textContent = 'Credenciales inválidas.';
+                    msgBox.className = 'message-box msg-error';
+                    msgBox.style.display = 'block';
+                } else {
+                    msgBox.textContent = 'Acceso concedido. Redirigiendo...';
+                    msgBox.className = 'message-box msg-success';
+                    msgBox.style.display = 'block';
+                    
+                    // Tiempo de espera para que el usuario vea el éxito
+                    setTimeout(() => { 
+                        window.location.href = "sincronizador.html"; 
+                    }, 1200);
+                }
+            } catch (err) {
+                console.error("Error de conexión:", err);
+                msgBox.textContent = 'Error de red. Intente de nuevo.';
+                msgBox.className = 'message-box msg-error';
+                msgBox.style.display = 'block';
             }
-        }
+        });
 
-        function initWebAudioAPI() {
-            if(isAudioApiInitialized) return;
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioCtx = new AudioContext();
-            const trackL = audioCtx.createMediaElementSource(audioL);
-            const trackR = audioCtx.createMediaElementSource(audioR);
+        // 3. ANIMACIÓN NEURONAS (Microscopio clínico)
+        const canvas = document.getElementById('neuro-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
 
-            if(audioCtx.createStereoPanner) {
-                pannerL = audioCtx.createStereoPanner(); pannerL.pan.value = -1;
-                pannerR = audioCtx.createStereoPanner(); pannerR.pan.value = 1;
-            } else {
-                pannerL = audioCtx.createPanner(); pannerL.setPosition(-1, 0, 0);
-                pannerR = audioCtx.createPanner(); pannerR.setPosition(1, 0, 0);
-            }
-            trackL.connect(pannerL).connect(audioCtx.destination);
-            trackR.connect(pannerR).connect(audioCtx.destination);
-            isAudioApiInitialized = true;
-        }
-
-        function setupMediaSession(fL, fR) {
-            if ('mediaSession' in navigator) {
-                navigator.mediaSession.metadata = new MediaMetadata({
-                    title: `Sinergia: ${fL.hz} & ${fR.hz}`,
-                    artist: 'NeuroSync App',
-                    album: `Izquierdo: ${fL.desc} | Derecho: ${fR.desc}`,
-                    artwork: [{ src: 'https://f005.backblazeb2.com/file/BACKUP-DE-IMAGENES/ESPIRITUALIDAD/Gemini_Generated_Image_w35flgw35flgw35f.png', sizes: '512x512', type: 'image/png' }]
+        function init() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = [];
+            for (let i = 0; i < 75; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: (Math.random() - 0.5) * 0.4,
+                    r: 2
                 });
-                navigator.mediaSession.setActionHandler('play', toggleMasterPlay);
-                navigator.mediaSession.setActionHandler('pause', toggleMasterPlay);
             }
         }
 
-        function handleTimerChange() {
-            if(isPlaying) startSessionTimer();
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy;
+                if(p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if(p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                ctx.fillStyle = 'rgba(2, 132, 199, 0.4)';
+                ctx.fill();
+
+                for(let j = i+1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if(dist < 110) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = `rgba(2, 132, 199, ${0.2 - dist/550})`;
+                        ctx.stroke();
+                    }
+                }
+            });
+            requestAnimationFrame(animate);
         }
 
-        function startSessionTimer() {
-            const duration = timeSelect.value;
-            if (duration === "bucle") {
-                endTime = 0;
-                return;
-            }
-            endTime = Date.now() + (parseInt(duration) * 1000);
-        }
-
-        function toggleMasterPlay() {
-            initWebAudioAPI();
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-
-            if (isPlaying) {
-                audioL.pause();
-                audioR.pause();
-                playBtn.innerHTML = '<i class="fas fa-play" style="margin-left: 5px;"></i>';
-                visualizer.classList.remove('playing');
-                endTime = 0; // Pausa el temporizador
-            } else {
-                updateUI();
-                audioL.play();
-                audioR.play();
-                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                visualizer.classList.add('playing');
-                
-                setupMediaSession(getFreqById(selectLeft.value), getFreqById(selectRight.value));
-                startSessionTimer(); // Inicia el temporizador
-            }
-            isPlaying = !isPlaying;
-        }
-
-        function changeVolume() {
-            audioL.volume = volSlider.value;
-            audioR.volume = volSlider.value;
-        }
-
-        function toggleTheme() {
-            const body = document.body;
-            if (body.getAttribute('data-theme') === 'light') {
-                body.removeAttribute('data-theme');
-            } else {
-                body.setAttribute('data-theme', 'light');
-            }
-        }
-
-        function analyzeEnergy() {
-            const input = document.getElementById('oracle-input').value.toLowerCase();
-            const resultText = document.getElementById('oracle-result');
-            
-            if(input.length < 3) { alert("Cuéntame qué deseas sanar o manifestar."); return; }
-
-            let recLeft = "432"; let recRight = "888";
-            let msg = "Alineación General Detectada.";
-
-            if(["dinero", "deuda", "abundancia", "ventas"].some(w => input.includes(w))) {
-                recLeft = "432"; recRight = "888"; msg = "Sinergia de Abundancia lista.";
-            } else if(["ansiedad", "miedo", "estres", "dormir"].some(w => input.includes(w))) {
-                recLeft = "396"; recRight = "111"; msg = "Sinergia de Paz y Liberación lista.";
-            } else if(["salud", "dolor", "sanar"].some(w => input.includes(w))) {
-                recLeft = "174"; recRight = "528"; msg = "Sinergia de Restauración Física lista.";
-            } else if(["amor", "pareja", "soledad"].some(w => input.includes(w))) {
-                recLeft = "639"; recRight = "528"; msg = "Sinergia de Amor y Conexión lista.";
-            }
-
-            resultText.innerHTML = msg;
-            selectLeft.value = recLeft;
-            selectRight.value = recRight;
-            updateUI();
-            if(!isPlaying) toggleMasterPlay();
-        }
-
-        function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('active');
-            document.getElementById('sidebar-overlay').classList.toggle('active');
-        }
-
-        function formatTime(seconds) {
-            if(isNaN(seconds)) return "00:00";
-            let m = Math.floor(seconds / 60);
-            let s = Math.floor(seconds % 60);
-            return (m < 10 ? '0'+m : m) + ':' + (s < 10 ? '0'+s : s);
-        }
-
-        // LÓGICA MAESTRA DEL TIEMPO
-        audioL.addEventListener('timeupdate', () => {
-            if (!audioL.duration) return;
-            const progress = (audioL.currentTime / audioL.duration) * 100;
-            progressBar.value = progress;
-            timeCurrent.textContent = formatTime(audioL.currentTime);
-            timeTotal.textContent = formatTime(audioL.duration);
-
-            // Verificación del temporizador en segundo plano
-            if (endTime > 0 && Date.now() >= endTime) {
-                toggleMasterPlay(); // Pausa la reproducción
-                alert("Sesión Cuántica Finalizada. ¡Bien hecho!");
-                endTime = 0;
-            }
-        });
-
-        progressBar.addEventListener('input', (e) => {
-            if(!audioL.duration) return;
-            const seekTime = (e.target.value / 100) * audioL.duration;
-            audioL.currentTime = seekTime;
-            audioR.currentTime = seekTime;
-        });
-
-        // ARRANQUE
-        createVisualizer();
-        initSelectors();
-
+        window.addEventListener('resize', init);
+        init();
+        animate();
     </script>
 </body>
 </html>
