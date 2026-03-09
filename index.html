@@ -8,8 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <style>
         :root {
             --bg-color: #f0f4f8; 
@@ -120,6 +118,55 @@
 
         .msg-error { background: #fef2f2; border: 1px solid #fca5a5; color: #ef4444; }
         .msg-success { background: #f0fdf4; border: 1px solid #86efac; color: #16a34a; }
+
+        /* ESTILOS PARA BOTONES DE SOPORTE Y COMPRA */
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 25px 0 15px 0;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .divider span { padding: 0 10px; text-transform: uppercase; letter-spacing: 0.5px;}
+        
+        .btn-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-decoration: none;
+            margin-bottom: 10px;
+            transition: 0.3s;
+        }
+        .btn-hotmart {
+            background-color: #fff;
+            color: #e14b1d; 
+            border: 1px solid #e14b1d;
+        }
+        .btn-hotmart:hover {
+            background-color: #fff0eb;
+        }
+        .btn-whatsapp {
+            background-color: #25d366;
+            color: #fff;
+            border: 1px solid #25d366;
+        }
+        .btn-whatsapp:hover {
+            background-color: #1fad53;
+        }
     </style>
 </head>
 <body>
@@ -152,18 +199,23 @@
         </form>
 
         <div id="message-container" class="message-box"></div>
+
+        <div class="divider"><span>¿Aún no tienes acceso?</span></div>
+        
+        <a href="https://pay.hotmart.com/U104728533E" target="_blank" class="btn-action btn-hotmart">
+            <i class="fas fa-bolt"></i> Adquirir Frecuencias NeuroSync
+        </a>
+        
+        <a href="https://wa.link/3yc8pr" target="_blank" class="btn-action btn-whatsapp">
+            <i class="fab fa-whatsapp" style="font-size: 1.1rem;"></i> Soporte por WhatsApp
+        </a>
     </div>
 
     <script>
-        // 1. CONFIGURACIÓN SUPABASE
-        const SUPABASE_URL = 'https://dothtuwrslpezhaxkjmw.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvdGh0dXdyc3BsZXpoYXhram13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzIzMjEsImV4cCI6MjA3MTI0ODMyMX0.B13yokCG9VQ49kjZ5pHeBdqBtW7i2CP8yg2l2Ekhqnc';
-        
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // 2. LÓGICA DE ACCESO
+        // LÓGICA DE ACCESO (Vía Netlify Functions)
         const loginForm = document.getElementById('login-form');
         const msgBox = document.getElementById('message-container');
+        const btnSubmit = document.getElementById('btn-submit');
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -171,56 +223,43 @@
             const emailValue = document.getElementById('email').value.trim();
             const passValue = document.getElementById('password').value.trim();
 
+            btnSubmit.disabled = true;
             msgBox.style.display = 'none';
 
-            // --- ACCESO MAESTRO DE EMERGENCIA ---
-            // Usa esto si Supabase te bloquea mientras configuras las reglas de tu base de datos
-            if(emailValue === "admin@neurosync.com" && passValue === "123456") {
-                msgBox.textContent = 'Acceso Maestro concedido...';
-                msgBox.className = 'message-box msg-success';
-                msgBox.style.display = 'block';
-                
-                // LA LÍNEA QUE FALTABA
-                sessionStorage.setItem('isLoggedIn', 'true');
-                
-                setTimeout(() => { window.location.href = "sincronizador.html"; }, 1200);
-                return;
-            }
-
             try {
-                // Consulta a la tabla usuarios_neurosync
-                const { data, error } = await _supabase
-                    .from('usuarios_neurosync')
-                    .select('*')
-                    .eq('email', emailValue)
-                    .eq('password', passValue);
+                // LLAMAMOS AL TÚNEL DE NETLIFY
+                const response = await fetch('/.netlify/functions/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: emailValue, password: passValue })
+                });
 
-                if (error || !data || data.length === 0) {
-                    console.error("Detalle del bloqueo:", error); // Para ver en la consola por qué falla
-                    msgBox.textContent = 'Credenciales inválidas.';
-                    msgBox.className = 'message-box msg-error';
-                    msgBox.style.display = 'block';
-                } else {
-                    msgBox.textContent = 'Acceso concedido. Redirigiendo...';
+                const result = await response.json();
+
+                if (response.ok) {
+                    msgBox.textContent = 'Acceso concedido. Sincronizando...';
                     msgBox.className = 'message-box msg-success';
                     msgBox.style.display = 'block';
-                    
-                    // ¡LA LÍNEA QUE FALTABA! Sin esto, sincronizador.html te rebota.
-                    sessionStorage.setItem('isLoggedIn', 'true');
                     
                     setTimeout(() => { 
                         window.location.href = "sincronizador.html"; 
                     }, 1200);
+                } else {
+                    msgBox.textContent = result.message || 'Credenciales inválidas.';
+                    msgBox.className = 'message-box msg-error';
+                    msgBox.style.display = 'block';
                 }
             } catch (err) {
-                console.error("Error de conexión:", err);
+                console.error("Error:", err);
                 msgBox.textContent = 'Error de red. Intente de nuevo.';
                 msgBox.className = 'message-box msg-error';
                 msgBox.style.display = 'block';
+            } finally {
+                btnSubmit.disabled = false;
             }
         });
 
-        // 3. ANIMACIÓN NEURONAS (Microscopio clínico)
+        // ANIMACIÓN DE NEURONAS (Fondo)
         const canvas = document.getElementById('neuro-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
