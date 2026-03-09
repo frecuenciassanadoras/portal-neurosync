@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -156,24 +155,37 @@
     </div>
 
     <script>
-        // 1. CONFIGURACIÓN SUPABASE (Tus llaves oficiales)
+        // 1. CONFIGURACIÓN SUPABASE
         const SUPABASE_URL = 'https://dothtuwrslpezhaxkjmw.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvdGh0dXdyc3BsZXpoYXhram13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzIzMjEsImV4cCI6MjA3MTI0ODMyMX0.B13yokCG9VQ49kjZ5pHeBdqBtW7i2CP8yg2l2Ekhqnc';
         
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // 2. LÓGICA DE ACCESO REFORZADA
+        // 2. LÓGICA DE ACCESO
         const loginForm = document.getElementById('login-form');
         const msgBox = document.getElementById('message-container');
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // Limpiamos espacios accidentales
             const emailValue = document.getElementById('email').value.trim();
             const passValue = document.getElementById('password').value.trim();
 
             msgBox.style.display = 'none';
+
+            // --- ACCESO MAESTRO DE EMERGENCIA ---
+            // Usa esto si Supabase te bloquea mientras configuras las reglas de tu base de datos
+            if(emailValue === "admin@neurosync.com" && passValue === "123456") {
+                msgBox.textContent = 'Acceso Maestro concedido...';
+                msgBox.className = 'message-box msg-success';
+                msgBox.style.display = 'block';
+                
+                // LA LÍNEA QUE FALTABA
+                sessionStorage.setItem('isLoggedIn', 'true');
+                
+                setTimeout(() => { window.location.href = "sincronizador.html"; }, 1200);
+                return;
+            }
 
             try {
                 // Consulta a la tabla usuarios_neurosync
@@ -184,6 +196,7 @@
                     .eq('password', passValue);
 
                 if (error || !data || data.length === 0) {
+                    console.error("Detalle del bloqueo:", error); // Para ver en la consola por qué falla
                     msgBox.textContent = 'Credenciales inválidas.';
                     msgBox.className = 'message-box msg-error';
                     msgBox.style.display = 'block';
@@ -192,7 +205,9 @@
                     msgBox.className = 'message-box msg-success';
                     msgBox.style.display = 'block';
                     
-                    // Tiempo de espera para que el usuario vea el éxito
+                    // ¡LA LÍNEA QUE FALTABA! Sin esto, sincronizador.html te rebota.
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    
                     setTimeout(() => { 
                         window.location.href = "sincronizador.html"; 
                     }, 1200);
