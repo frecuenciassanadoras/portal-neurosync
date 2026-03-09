@@ -115,7 +115,7 @@
         /* --- ORÁCULO --- */
         .oracle-section {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
             width: 100%;
         }
 
@@ -153,7 +153,7 @@
             line-height: 1.4;
             margin-top: 20px;
             color: var(--text-main);
-            min-height: 60px;
+            min-height: 30px;
         }
 
         /* --- VISUALIZADOR DE ONDAS --- */
@@ -163,7 +163,7 @@
             justify-content: center;
             gap: 4px;
             height: 120px;
-            margin-bottom: 50px;
+            margin-bottom: 30px;
             width: 100%;
         }
 
@@ -202,7 +202,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-bottom: 50px;
+            margin-bottom: 30px;
             cursor: pointer;
             box-shadow: 0 15px 35px rgba(0,0,0,0.2);
             transition: transform 0.3s;
@@ -223,6 +223,58 @@
             transition: background-color 0.4s ease;
         }
 
+        /* --- NUEVO: CONTROLES DE TIEMPO Y PROGRESO --- */
+        .progress-wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .time-labels {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .timer-select {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .progress-bar {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .progress-bar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--text-main);
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
         /* --- SELECTORES INFERIORES --- */
         .selectors-container {
             display: flex;
@@ -233,6 +285,7 @@
             padding: 20px;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
         }
 
         .selector-box {
@@ -273,9 +326,26 @@
         .selector-box.left .freq-select { color: var(--color-left); }
         .selector-box.right .freq-select { color: var(--color-right); }
 
+        /* --- NUEVO: ORÁCULO DE SIGNIFICADO DE SINERGIA --- */
+        .synergy-meaning-box {
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px dashed var(--border-color);
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .synergy-meaning-box strong {
+            color: var(--text-main);
+        }
+
         /* Controles de Volumen */
         .volume-control {
-            margin-top: 40px;
+            margin-top: 30px;
             display: flex;
             align-items: center;
             gap: 15px;
@@ -284,13 +354,14 @@
             max-width: 300px;
         }
         
-        input[type="range"] {
+        .vol-slider {
             flex: 1;
             accent-color: var(--text-muted);
             height: 4px;
             background: var(--border-color);
             border-radius: 5px;
             outline: none;
+            -webkit-appearance: auto;
         }
     </style>
 </head>
@@ -337,6 +408,20 @@
             </div>
         </div>
 
+        <div class="progress-wrapper">
+            <div class="time-labels">
+                <span id="time-current">00:00</span>
+                <select id="time-select" class="timer-select" onchange="handleTimerChange()">
+                    <option value="bucle">Bucle ∞</option>
+                    <option value="900">Apagar en 15 min</option>
+                    <option value="1800">Apagar en 30 min</option>
+                    <option value="3600">Apagar en 60 min</option>
+                </select>
+                <span id="time-total">00:00</span>
+            </div>
+            <input type="range" id="progress-bar" class="progress-bar" value="0" min="0" max="100" step="0.1">
+        </div>
+
         <div class="selectors-container">
             <div class="selector-box left">
                 <span class="selector-label">Oído Izquierdo</span>
@@ -349,9 +434,13 @@
             </div>
         </div>
 
+        <div class="synergy-meaning-box" id="synergy-meaning">
+            Sinergia Activa: Selecciona tus frecuencias...
+        </div>
+
         <div class="volume-control">
             <i class="fas fa-volume-down"></i>
-            <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="0.8" onchange="changeVolume()">
+            <input type="range" id="vol-slider" class="vol-slider" min="0" max="1" step="0.05" value="0.8" onchange="changeVolume()">
             <i class="fas fa-volume-up"></i>
         </div>
 
@@ -387,6 +476,13 @@
         const volSlider = document.getElementById('vol-slider');
         const visualizer = document.getElementById('visualizer');
         const rootVars = document.documentElement.style;
+        
+        // REFERENCIAS NUEVAS
+        const progressBar = document.getElementById('progress-bar');
+        const timeCurrent = document.getElementById('time-current');
+        const timeTotal = document.getElementById('time-total');
+        const timeSelect = document.getElementById('time-select');
+        const synergyMeaning = document.getElementById('synergy-meaning');
 
         let isPlaying = false;
         let currentL_ID = null;
@@ -394,6 +490,7 @@
         
         let audioCtx, pannerL, pannerR;
         let isAudioApiInitialized = false;
+        let sessionTimer = null; // Para el apagado automático
 
         // 1. GENERAR BARRAS DEL VISUALIZADOR
         function createVisualizer() {
@@ -420,13 +517,24 @@
 
         function getFreqById(id) { return frequencies.find(f => f.id === id); }
 
-        // 3. ACTUALIZAR COLORES Y AUDIOS
+        // 3. NUEVO: ACTUALIZAR TEXTO DE SIGNIFICADO (ORÁCULO DE SINERGIA)
+        function updateSynergyMeaning(fL, fR) {
+            if(fL.id === fR.id) {
+                synergyMeaning.innerHTML = `Sintonización Pura: Estás potenciando la energía de <strong>${fL.desc}</strong> en ambos hemisferios. Ideal para meditación profunda.`;
+            } else {
+                synergyMeaning.innerHTML = `Sinergia Activa: Instalando <strong>${fL.desc}</strong> en tu plano subconsciente (Izquierdo), para proyectar y manifestar <strong>${fR.desc}</strong> en tu realidad consciente (Derecho).`;
+            }
+        }
+
+        // 4. ACTUALIZAR COLORES Y AUDIOS
         function updateUI() {
             const fL = getFreqById(selectLeft.value);
             const fR = getFreqById(selectRight.value);
             
             rootVars.setProperty('--color-left', fL.color);
             rootVars.setProperty('--color-right', fR.color);
+            
+            updateSynergyMeaning(fL, fR); // Llamamos al oráculo
             
             let trackChanged = false;
 
@@ -447,10 +555,11 @@
             if(isPlaying && trackChanged) {
                 audioL.play().catch(e => console.log(e));
                 audioR.play().catch(e => console.log(e));
+                setupMediaSession(fL, fR); // Actualiza la pantalla de bloqueo
             }
         }
 
-        // 4. MOTOR BINAURAL (STEREO PANNING)
+        // 5. MOTOR BINAURAL (STEREO PANNING)
         function initWebAudioAPI() {
             if(isAudioApiInitialized) return;
 
@@ -476,7 +585,43 @@
             isAudioApiInitialized = true;
         }
 
-        // 5. PLAY / PAUSE
+        // 6. NUEVO: API MEDIA SESSION (Para que no se apague en segundo plano)
+        function setupMediaSession(fL, fR) {
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: `Sinergia: ${fL.hz} & ${fR.hz}`,
+                    artist: 'NeuroSync Sincronizador',
+                    album: `Izquierdo: ${fL.desc} | Derecho: ${fR.desc}`,
+                    artwork: [{ src: 'https://f005.backblazeb2.com/file/BACKUP-DE-IMAGENES/ESPIRITUALIDAD/Gemini_Generated_Image_w35flgw35flgw35f.png', sizes: '512x512', type: 'image/png' }]
+                });
+                navigator.mediaSession.setActionHandler('play', toggleMasterPlay);
+                navigator.mediaSession.setActionHandler('pause', toggleMasterPlay);
+            }
+        }
+
+        // 7. NUEVO: LÓGICA DEL TEMPORIZADOR
+        function handleTimerChange() {
+            if(isPlaying) {
+                startSessionTimer(); // Reinicia el temporizador si se cambia en plena reproducción
+            }
+        }
+
+        function startSessionTimer() {
+            clearTimeout(sessionTimer); // Borra cualquier temporizador anterior
+            const duration = timeSelect.value;
+            
+            if (duration === "bucle") return; // Si es bucle infinito, no hace nada
+
+            const totalMs = parseInt(duration) * 1000;
+            sessionTimer = setTimeout(() => {
+                if (isPlaying) {
+                    toggleMasterPlay(); // Pausa la reproducción
+                    alert("Tu sesión de frecuencias cuánticas ha terminado. ¡Bien hecho!");
+                }
+            }, totalMs);
+        }
+
+        // 8. PLAY / PAUSE
         function toggleMasterPlay() {
             initWebAudioAPI();
             if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -486,6 +631,7 @@
                 audioR.pause();
                 playBtn.innerHTML = '<i class="fas fa-play" style="margin-left: 5px;"></i>';
                 visualizer.classList.remove('playing');
+                clearTimeout(sessionTimer); // Pausa el temporizador
             } else {
                 updateUI();
                 audioL.play().catch(e => console.log("CORS/Autoplay L"));
@@ -493,17 +639,20 @@
                 
                 playBtn.innerHTML = '<i class="fas fa-pause"></i>';
                 visualizer.classList.add('playing');
+                
+                setupMediaSession(getFreqById(selectLeft.value), getFreqById(selectRight.value));
+                startSessionTimer(); // Inicia el temporizador de apagado
             }
             isPlaying = !isPlaying;
         }
 
-        // 6. VOLUMEN
+        // 9. VOLUMEN
         function changeVolume() {
             audioL.volume = volSlider.value;
             audioR.volume = volSlider.value;
         }
 
-        // 7. MODO CLARO / OSCURO
+        // 10. MODO CLARO / OSCURO
         function toggleTheme() {
             const body = document.body;
             const themeIcon = document.getElementById('theme-icon');
@@ -517,7 +666,7 @@
             }
         }
 
-        // 8. ORÁCULO
+        // 11. ORÁCULO DE BÚSQUEDA
         function analyzeEnergy() {
             const input = document.getElementById('oracle-input').value.toLowerCase();
             const resultText = document.getElementById('oracle-result');
@@ -552,13 +701,38 @@
             if(!isPlaying) toggleMasterPlay();
         }
 
-        // 9. FUNCIÓN DEL MENÚ LATERAL (NUEVA)
+        // 12. FUNCIÓN DEL MENÚ LATERAL
         function toggleMenu() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebar-overlay');
             sidebar.classList.toggle('active');
             overlay.classList.toggle('active');
         }
+
+        // 13. NUEVO: ACTUALIZACIÓN DE BARRA DE TIEMPO
+        function formatTime(seconds) {
+            if(isNaN(seconds)) return "00:00";
+            let m = Math.floor(seconds / 60);
+            let s = Math.floor(seconds % 60);
+            return (m < 10 ? '0'+m : m) + ':' + (s < 10 ? '0'+s : s);
+        }
+
+        audioL.addEventListener('timeupdate', () => {
+            if (!audioL.duration) return;
+            // Actualiza la barra y el tiempo actual
+            const progress = (audioL.currentTime / audioL.duration) * 100;
+            progressBar.value = progress;
+            timeCurrent.textContent = formatTime(audioL.currentTime);
+            timeTotal.textContent = formatTime(audioL.duration);
+        });
+
+        // Arrastrar la barra de tiempo
+        progressBar.addEventListener('input', (e) => {
+            if(!audioL.duration) return;
+            const seekTime = (e.target.value / 100) * audioL.duration;
+            audioL.currentTime = seekTime;
+            audioR.currentTime = seekTime;
+        });
 
         // ARRANQUE
         createVisualizer();
